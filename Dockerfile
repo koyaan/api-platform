@@ -64,5 +64,13 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 COPY docker/app/docker-entrypoint.sh /usr/local/bin/docker-app-entrypoint
 RUN chmod +x /usr/local/bin/docker-app-entrypoint
 
-ENTRYPOINT ["docker-app-entrypoint"]
-CMD ["php-fpm"]
+RUN apk add --no-cache --virtual .persistent-deps \
+		ca-certificates \
+		openssl
+
+# stolen from https://github.com/hashicorp/docker-base/blob/master/build.sh
+RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64
+RUN chmod +x /usr/local/bin/dumb-init
+
+ENTRYPOINT ["dumb-init"]
+CMD ["docker-app-entrypoint", "php-fpm"]
